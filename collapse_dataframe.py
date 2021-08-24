@@ -25,17 +25,20 @@ def get_all_columns_from_schema(schema):
 
   return _master_list
 
-def collapse_dataframe(source_df):
+def collapse_columns(source_schema):
   _columns_to_select = []
-  _all_columns = get_all_columns_from_schema(source_df.schema)
+  _all_columns = get_all_columns_from_schema(source_schema)
   for column_collection in _all_columns:
     if len(column_collection) > 1:
       _columns_to_select.append(col('.'.join(column_collection)).alias('_'.join(column_collection)))
     else:
       _columns_to_select.append(column_collection[0])
 
-  return source_df.select(_columns_to_select)
+  return _columns_to_select
 
+def collapse_to_dataframe(source_df):
+  return source_df.select(collapse_columns(source_df.schema))
+  
 # now test
-collapse_dataframe(df).show()
+collapse_to_dataframe(df).show()
 
