@@ -121,6 +121,6 @@ car
 name
 ```
 
-Recursion solves one problem but Python raises another.  Unfortunately Python does not support passing function attributes by reference.  What this means is that when you pass a value to a function, Python makes a copy of it.  In the case of the recursion example, for each iteration of the parse_schema function, Python makes a copy of the depth parameter rather than modify the original version.
+Recursion solves one problem but Python raises another.  Unfortunately Python does not support passing function attributes by reference.  When you pass a value to a function, Python makes a copy of it, no reference to the original is maintained.  Every time we iterate parse_schema, Python makes a copy of the two parameters, schema and depth such that when we increment depth by 1, on the recursive function call, the original copy of depth remains unchanged.
 
-This is a problem as each iteration of the parse_schema function will not know what came before it.  Without somethinge extra, we will not be able to create an array of branches and return them as the output of the parse function.
+This is a problem as each iteration of parse_schema will not know what came before it.  We will not be able to create an array of branches and return them as the output of the parse function.  To overcome this limitation, we wrap the parse function within another function, and use the context of the parent function as a place holder for all hierarchical pathways that represent the complete schema.
