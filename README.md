@@ -4,11 +4,12 @@
 Apache Spark natively supports hierarchical data.  Using dot notation within the select clause, individual data points can be selected from a structured column's nested values.  For example:
 
 ```python
-jsonStrings = ['{"car":{"color":"red", "model":"jaguar"},"name":"Jo","address":{"city":"Houston","state":"Texas", "zip":{"first":1234,"second":4321}}}']
+jsonStrings = ['{"car":{"color":"red", "model":"jaguar"},"name":"Jo","address":{"city":"Houston",' + \
+      '"state":"Texas","zip":{"first":1234,"second":4321}}}']
 otherPeopleRDD = spark.sparkContext.parallelize(jsonStrings)
 source_json_df = spark.read.json(otherPeopleRDD)
 
-source_json_df.select(col("car.color"), col("car.model").show()
+source_json_df.select(col("car.color"), col("car.model")).show()
 ```
 
 This will return the following table frame:
