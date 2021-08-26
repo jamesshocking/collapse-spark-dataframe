@@ -90,7 +90,7 @@ Apache Spark supports a number of different data types including String and Inte
 A recursive function is one that calls itself and it is ideally suited to traversing a tree structure such as our schema.  For example:
 
 ```python
-def parse_schema(schema, depth=0):
+def get_all_columns_from_schema(schema, depth=0):
   for field in schema.fields:
     field_name = ""
     for i in range(depth):
@@ -99,10 +99,10 @@ def parse_schema(schema, depth=0):
     field_name += field.name
     print(field_name)
     if isinstance(field.dataType, StructType):    
-      parse_schema(field.dataType, depth+1)   
+      get_all_columns_from_schema(field.dataType, depth+1)   
       
 #
-parse_schema(source_json_df.schema)
+get_all_columns_from_schema(source_json_df.schema)
 ```
 
 If you execute this code on the source_json_df dataframe declared above, you will see the following output:
@@ -120,9 +120,9 @@ car
 name
 ```
 
-Recursion solves one problem but Python raises another.  Unfortunately Python does not support passing function attributes by reference.  When you pass a value to a function, Python makes a copy of it, no reference to the original is maintained.  Every time we iterate parse_schema, Python makes a copy of the two parameters, schema and depth such that when we increment depth by 1, the original copy of depth remains unchanged and only the instance received by the function is updated.
+Recursion solves one problem but Python raises another.  Unfortunately Python does not support passing function attributes by reference.  When you pass a value to a function, Python makes a copy of it, no reference to the original is maintained.  Every time we iterate get_all_columns_from_schema, Python makes a copy of the two parameters, schema and depth such that when we increment depth by 1, the original copy of depth remains unchanged and only the instance received by the function is updated.
 
-This is a problem as each iteration of parse_schema will not know what came before it.  Whilst we could be able to create an array for each branch, we have no way of collating all branch arrays together into a list that can be returned to the executing code.  To overcome this limitation, we need to wrap the parse function within another function (or a class but a function is more simple), and use the context of the parent function as a place holder for all hierarchical pathways that represent the complete schema.
+This is a problem as each iteration of get_all_columns_from_schema will not know what came before it.  Whilst we could be able to create an array for each branch, we have no way of collating all branch arrays together into a list that can be returned to the executing code.  To overcome this limitation, we need to wrap the parse function within another function (or a class but a function is more simple), and use the context of the parent function as a place holder for all hierarchical pathways that represent the complete schema.
 
 ```python
 def get_all_columns_from_schema(source_schema):
@@ -140,9 +140,9 @@ def get_all_columns_from_schema(source_schema):
   return branches
 ```
 
-Them main outer function "get_all_columns_from_schema" expects the dataframe schema as a single input parameter.  The function starts by declaring a list, which is effectively global for the inner function.  This is the list that collects all branches in their array form.  The recursive function is declared within "get_all_columns_from_schema" and is the same as the demonstration above, albeit with minor tweaks changing the depth counter with a list to persist all ancestor nodes for an individual branch.  In-addition, the call to print has been replaced with an append to the branches list owned by the outer function.
+Them main outer function, get_all_columns_from_schema, expects the dataframe schema as a single input parameter.  The function starts by declaring a list, which is effectively global for the inner function.  This is the list that collects all branches in their array form.  The recursive function is declared within get_all_columns_from_schema and is the same as the demonstration above, albeit with minor tweaks changing the depth counter with a list to persist all ancestor nodes for an individual branch.  In-addition, the call to print has been replaced with an append to the branches list owned by the outer function.
 
-If we run this code against our dataframe's schema, "get_all_columns_from_schema" will return the following list:
+If we run this code against our dataframe's schema, get_all_columns_from_schema will return the following list:
 
 ```python
 [
@@ -156,4 +156,33 @@ If we run this code against our dataframe's schema, "get_all_columns_from_schema
 ]
 ```
 
-### Collapsing the Structured Columns
+### Collapsing Structured Columns
+
+Now that we have the meta-data for all branches, the final step is to create an array that will hold the dataframe columns that we want to select, iterate over the list returned by get_all_columns_from_schema, appending Column objects initialised using the dot-notation address of each branch value before assigning a unique alias to each one.
+
+```python
+
+  from pyspark.sql.functions import col
+
+  _columns_to_select = []
+  _all_columns = get_all_columns_from_schema(source_schema)
+  for column_collection in _all_columns:
+    if len(column_collection) > 1:
+      _columns_to_select.append(col('.'.join(column_collection)).alias('_'.join(column_collection)))
+    else:
+      _columns_to_select.append(col(column_collection[0]))
+```
+
+We start by initialising an array with the output from get_all_columns_from_schema, before iterating with a loop, and testing each element for its item length.  If the length is greater than one then it's a branch else the name of a regular non-hierarchical column.  Using the Python string join method, we concatenate the array members together, first to create the dot-notation string to select the branch value, and second to declare the new column's alias.  
+
+The new array, _columns_to_select, now contains everything we need to completely collapse all hierarchical types, creating a column for each individual value.  Executing:
+
+```python
+collapsed_df = source_json_df.select(_columns_to_select)
+```
+
+Outputs the following dataframe:
+
+|address_city|address_state|address_zip_first|address_zip_second|car_color|car_model|name|
+|------------|-------------|-----------------|------------------|---------|---------|----|
+|     Houston|        Texas|             1234|              4321|      red|   jaguar|  Jo|
