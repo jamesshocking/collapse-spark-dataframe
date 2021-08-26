@@ -24,20 +24,19 @@ df = spark.read.json(otherPeopleRDD)
 #
 # The function will return the following array:
 # [["name"],["address","street"],["address","town"],["details","age"],["details","gender"]]
-def get_all_columns_from_schema(schema):  
-  _master_list = []
+def get_all_columns_from_schema(source_schema):
+  branches = []
   def inner_get(schema, ancestor=[]):
     for field in schema.fields:
-      _current_path = ancestor+[field.name]
+      branch_path = ancestor+[field.name]     
       if isinstance(field.dataType, StructType):    
-        inner_get(field.dataType, _current_path)     
+        inner_get(field.dataType, branch_path) 
       else:
-        _master_list.append(_current_path)
-  
-  # kick off the recursive walk of all columns and any structures
-  inner_get(schema)
-
-  return _master_list
+        branches.append(branch_path)
+        
+  inner_get(source_schema)
+        
+  return branches
 
 # collapse_columns is passed the dataframe schema, which is then passes
 # to get_all_columns_from_schema.  On return, it iterates through the array
