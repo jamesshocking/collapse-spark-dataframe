@@ -125,24 +125,24 @@ Recursion solves one problem but Python raises another.  Unfortunately Python do
 This is a problem as each iteration of parse_schema will not know what came before it.  Whilst we could be able to create an array for each branch, we have no way of collating all branch arrays together into a list that can be returned to the executing code.  To overcome this limitation, we need to wrap the parse function within another function (or a class but a function is more simple), and use the context of the parent function as a place holder for all hierarchical pathways that represent the complete schema.
 
 ```python
-def parent_parse(source_schema):
+def get_all_columns_from_schema(source_schema):
   branches = []
-  def parse_schema(schema, ancestor=[]):
+  def inner_get(schema, ancestor=[]):
     for field in schema.fields:
       branch_path = ancestor+[field.name]     
       if isinstance(field.dataType, StructType):    
-        parse_schema(field.dataType, branch_path) 
+        inner_get(field.dataType, branch_path) 
       else:
         branches.append(branch_path)
         
-  parse_schema(source_schema)
+  inner_get(source_schema)
         
   return branches
 ```
 
->> Explain code here
+Them main outer function "get_all_columns_from_schema" expects the dataframe schema as a single input parameter.  The function starts by declaring a list, which is effectively global for the inner function.  This is the list that collects all branches in their array form.  The recursive function is declared within "get_all_columns_from_schema" and is the same as the demonstration above, albeit with minor tweaks changing the depth counter with a list to persist all ancestor nodes for an individual branch.  In-addition, the call to print has been replaced with an append to the branches list owned by the outer function.
 
-If we run this code against our dataframe, we'll parent_parse will return the following list:
+If we run this code against our dataframe's schema, "get_all_columns_from_schema" will return the following list:
 
 ```python
 [
@@ -155,3 +155,5 @@ If we run this code against our dataframe, we'll parent_parse will return the fo
   ['name']
 ]
 ```
+
+### Collapsing the Structured Columns
