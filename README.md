@@ -170,7 +170,7 @@ Now that we have the meta-data for all branches, the final step is to create an 
   from pyspark.sql.functions import col
 
   _columns_to_select = []
-  _all_columns = get_all_columns_from_schema(source_schema)
+  _all_columns = get_all_columns_from_schema(source_json_df.schema)
   for column_collection in _all_columns:
     if len(column_collection) > 1:
       _columns_to_select.append(col('.'.join(column_collection)).alias('_'.join(column_collection)))
@@ -184,6 +184,7 @@ The new array, _columns_to_select, now contains everything we need to completely
 
 ```python
 collapsed_df = source_json_df.select(_columns_to_select)
+collapsed_df.show()
 ```
 
 Outputs the following dataframe:
