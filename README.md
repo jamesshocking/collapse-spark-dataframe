@@ -4,6 +4,8 @@
 Apache Spark natively supports complex data types, and in some cases like JSON where an appropriate data source connector is available, it makes a pretty decent dataframe representation of the data.  Top level key value pairs are presented in their own columns, whilst more complex hierarchy data is persisted using column cast to a complex data type.  Using dot notation within the select clause, individual data points within this complex object can be selected.  For example:
 
 ```python
+from pyspark.sql.functions import col
+
 jsonStrings = ['{"car":{"color":"red", "model":"jaguar"},"name":"Jo","address":{"city":"Houston",' + \
       '"state":"Texas","zip":{"first":1234,"second":4321}}}']
 otherPeopleRDD = spark.sparkContext.parallelize(jsonStrings)
@@ -90,6 +92,8 @@ Apache Spark supports a number of different data types including String and Inte
 A recursive function is one that calls itself and it is ideally suited to traversing a tree structure such as our schema.  For example:
 
 ```python
+from pyspark.sql.types import StructType
+
 def get_all_columns_from_schema(schema, depth=0):
   for field in schema.fields:
     field_name = ""
@@ -125,6 +129,8 @@ Recursion solves one problem but Python raises another.  Unfortunately Python do
 This is a problem as each iteration of get_all_columns_from_schema will not know what came before it.  Whilst we would be able to create an array for each branch, we have no way of collating all branch arrays together into a list that can be returned to the executing code.  The code that will create our select statement.  To overcome this Python limitation, we need to wrap the parse function within another function (or a class but a function is more simple), and use the context of the parent function as a container for our meta-data array.
 
 ```python
+from pyspark.sql.types import StructType
+
 def get_all_columns_from_schema(source_schema):
   branches = []
   def inner_get(schema, ancestor=[]):
@@ -161,7 +167,6 @@ If we run this code against our dataframe's schema, get_all_columns_from_schema 
 Now that we have the meta-data for all branches, the final step is to create an array that will hold the dataframe columns that we want to select, iterate over the meta-data list, and create Column objects initialised using the dot-notation address of each branch value before assigning a unique alias to each one.
 
 ```python
-
   from pyspark.sql.functions import col
 
   _columns_to_select = []
