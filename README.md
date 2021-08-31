@@ -18,7 +18,7 @@ This will return the following dataframe:
 |-------|----|
 | red   | jaguar |
 
-This mechanism is simple and it works.  However, if the complexity of the data is multiple levels deep, spans a large number of attributes and/or columns, each aligned to a different schema and the consumer of the data isn't able to cope with complex data, the manual approach of writing out the Select statement can be labour intensive and be difficult to maintain (from a coding perspective).  One such data source is the Google Analytics dataset on Google Big Query ([](https://support.google.com/analytics/answer/3437719?hl=en)).
+This mechanism is simple and it works.  However, if the complexity of the data is multiple levels deep, spans a large number of attributes and/or columns, each aligned to a different schema and the consumer of the data isn't able to cope with complex data, the manual approach of writing out the Select statement can be labour intensive and be difficult to maintain (from a coding perspective).  One such data source is the Google Analytics dataset on Google Big Query ([https://support.google.com/analytics/answer/3437719?hl=en](https://support.google.com/analytics/answer/3437719?hl=en)).
 
 To simplify working with complex data, the Python code in this repository is designed to transform multi-level complex hierarchical columns into a non-hierarchical verison of themselves.  Essentially, a dataframe that has no complex data type columns.  All nested attributes are assigned their own column named after their original location.  For example:
 
