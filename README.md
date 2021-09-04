@@ -94,7 +94,8 @@ A recursive function is one that calls itself and it is ideally suited to traver
 ```python
 from pyspark.sql.types import StructType
 
-def get_all_columns_from_schema(schema, depth=0):
+def get_all_columns_from_schema(schema, depth=None):
+  if depth is None: depth = 0
   for field in schema.fields:
     field_name = ""
     for i in range(depth):
@@ -133,7 +134,8 @@ from pyspark.sql.types import StructType
 
 def get_all_columns_from_schema(source_schema):
   branches = []
-  def inner_get(schema, ancestor=[]):
+  def inner_get(schema, ancestor=None):
+    if ancestor is None: ancestor = []
     for field in schema.fields:
       branch_path = ancestor+[field.name]     
       if isinstance(field.dataType, StructType):    
