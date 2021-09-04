@@ -26,7 +26,8 @@ df = spark.read.json(otherPeopleRDD)
 # [["name"],["address","street"],["address","town"],["details","age"],["details","gender"]]
 def get_all_columns_from_schema(source_schema):
   branches = []
-  def inner_get(schema, ancestor=[]):
+  def inner_get(schema, ancestor=None):
+    if ancestor is None: ancestor = []
     for field in schema.fields:
       branch_path = ancestor+[field.name]     
       if isinstance(field.dataType, StructType):    
@@ -46,8 +47,9 @@ def get_all_columns_from_schema(source_schema):
 # for example, lets say _all_columns has the following array: [["name"],["address","street"]]
 # after iterating through the array, the function response will be
 # [col("name"), col("address.street").alias("address_street")]
-def collapse_columns(source_schema, columnFilter=""):
+def collapse_columns(source_schema, columnFilter=None):
   _columns_to_select = []
+  if columnFilter is None: columnFilter = ""
   _all_columns = get_all_columns_from_schema(source_schema)
   for column_collection in _all_columns:
     if (len(columnFilter) > 0) & (column_collection[0] != columnFilter): 
