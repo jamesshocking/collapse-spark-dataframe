@@ -55,10 +55,15 @@ def collapse_columns(source_schema, columnFilter=None):
     if (len(columnFilter) > 0) & (column_collection[0] != columnFilter): 
         continue
 
+    # columns with questionable character choices like a space, need to be wrapped
+    # in `` characters.  The alias function will do this automatically, but the selection of the column
+    # e.g. col("col name") will not
+    select_column_collection = ['`%s`' % list_item for list_item in column_collection]    
+    
     if len(column_collection) > 1:
-      _columns_to_select.append(col('.'.join(column_collection)).alias('_'.join(column_collection)))
+      _columns_to_select.append(col('.'.join(select_column_collection)).alias('_'.join(column_collection)))
     else:
-      _columns_to_select.append(col(column_collection[0]))
+      _columns_to_select.append(col(select_column_collection[0]))
 
   return _columns_to_select
 
