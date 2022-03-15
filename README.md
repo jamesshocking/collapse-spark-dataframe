@@ -166,18 +166,21 @@ If we run this code against our dataframe's schema, get_all_columns_from_schema 
 
 ### Collapsing Structured Columns
 
-Now that we have the meta-data for all branches, the final step is to create an array that will hold the dataframe columns that we want to select, iterate over the meta-data list, and create Column objects initialised using the dot-notation address of each branch value before assigning a unique alias to each one.
+Now that we have the meta-data for all branches, the final step is to create an array that will hold the dataframe columns that we want to select, iterate over the meta-data list, and create Column objects initialised using the dot-notation address of each branch value before assigning a unique alias to each one.  Make special note on the need to cater for columns that may have spaces and other unusual characters.
 
 ```python
   from pyspark.sql.functions import col
 
   _columns_to_select = []
   _all_columns = get_all_columns_from_schema(source_json_df.schema)
+  
   for column_collection in _all_columns:
+    _select_column_collection = ['`%s`' % list_item for list_item in column_collection]    
+  
     if len(column_collection) > 1:
-      _columns_to_select.append(col('.'.join(column_collection)).alias('_'.join(column_collection)))
+      _columns_to_select.append(col('.'.join(_select_column_collection)).alias('_'.join(column_collection)))
     else:
-      _columns_to_select.append(col(column_collection[0]))
+      _columns_to_select.append(col(_select_column_collection[0]))
 ```
 
 We start by initialising an array with the output from get_all_columns_from_schema, before iterating with a loop, and testing each element for its item length.  If the length is greater than one then it's a branch else it's the name of a regular non-hierarchical column.  Using the join method on a Pythons string, we concatenate the array members together, first to create the dot-notation string to select the branch value, and second to declare the new column's alias.  
